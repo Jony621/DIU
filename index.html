@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#05080d" />
+  <title>Dev Days Dhaka 2026 — DIU Campus Journey</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    html,body{margin:0;height:100%;background:#05080d;color:#fff;overflow:hidden}
+    body{font-family:Archivo,system-ui,sans-serif}
+    #app{position:fixed;inset:0}
+    #webgl{position:fixed;inset:0;z-index:0}
+    #scroll{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;z-index:3;scrollbar-width:none;pointer-events:auto}
+    #scroll::-webkit-scrollbar{display:none}
+    #scroll .spacer{height:1000vh}
+    #hud{position:fixed;inset:0;z-index:5;pointer-events:none}
+    .top{position:absolute;top:24px;display:flex;flex-direction:column;gap:5px}
+    #altimeter{left:28px}.chapter{right:28px;text-align:right}
+    .mono{font-family:"JetBrains Mono",monospace;letter-spacing:.08em}
+    .eyebrow{font-size:10px;opacity:.58;text-transform:uppercase}
+    .value{font-size:18px;font-weight:600}
+    #chapterTag{font-size:12px}
+    #narrative{position:absolute;left:50%;top:50%;width:min(680px,78vw);transform:translate(-50%,-50%);text-align:center}
+    #narrative .kicker{font:500 11px "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;opacity:.6}
+    #narrative h1{font-size:clamp(38px,7vw,92px);line-height:.9;margin:16px 0;font-weight:800;letter-spacing:-.055em}
+    #narrative p{margin:auto;max-width:560px;color:rgba(255,255,255,.72);font-size:15px;line-height:1.65}
+    #profile{position:absolute;right:22px;top:50%;transform:translateY(-50%);width:105px;height:390px}
+    #profile svg{width:100%;height:100%;overflow:visible}
+    .route{fill:none;stroke:rgba(255,255,255,.2);stroke-width:2}
+    .routeActive{fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round}
+    .waypoint{fill:#080d14;stroke:rgba(255,255,255,.65);stroke-width:2;cursor:pointer;pointer-events:auto}
+    .waypoint.active{fill:#fff;stroke:#fff}
+    #marker{fill:#ffd45a;filter:drop-shadow(0 0 8px rgba(255,212,90,.8))}
+    #controls{position:absolute;bottom:24px;left:28px;display:flex;gap:10px;pointer-events:auto}
+    button{border:1px solid rgba(255,255,255,.2);background:rgba(4,8,13,.5);backdrop-filter:blur(12px);color:#fff;padding:11px 15px;border-radius:999px;font:600 11px "JetBrains Mono",monospace;letter-spacing:.06em;cursor:pointer}
+    button:hover{background:rgba(255,255,255,.1)}
+    #loader{position:fixed;inset:0;background:#05080d;z-index:20;display:grid;place-items:center;transition:opacity .8s ease}
+    #loader.hide{opacity:0;pointer-events:none}
+    .loaderBox{text-align:center;width:min(560px,82vw)}
+    .loaderBox h2{font-size:clamp(34px,6vw,76px);letter-spacing:-.06em;margin:0 0 18px}
+    .loaderBox p{font:10px "JetBrains Mono",monospace;letter-spacing:.18em;opacity:.55}
+    .bar{height:2px;background:rgba(255,255,255,.12);margin-top:28px;overflow:hidden}
+    #barFill{height:100%;width:0;background:#fff;transition:width .25s}
+    #nogl{position:fixed;inset:0;background:#05080d;color:#fff;padding:40px;overflow:auto;z-index:30}
+    .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:700px){
+      .top{top:16px}.top.left{left:16px}.chapter{right:16px}
+      #profile{right:4px;width:70px;height:300px}
+      #narrative{top:46%}
+      #controls{left:16px;bottom:16px}
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <canvas id="webgl" aria-hidden="true"></canvas>
+  <div id="loader">
+    <div class="loaderBox">
+      <p>DAFFODIL INTERNATIONAL UNIVERSITY · DIGITAL EXPERIENCE</p>
+      <h2>DEV DAYS<br> DHAKA 2026</h2>
+      <div class="bar"><div id="barFill"></div></div>
+      <p id="loadText">INITIALIZING CAMPUS...</p>
+    </div>
+  </div>
+
+  <main id="scroll" aria-label="Dev Days Dhaka 2026 campus journey">
+    <div class="spacer"></div>
+  </main>
+
+  <div id="hud">
+    <div id="altimeter" class="top left">
+      <div class="eyebrow">Campus altitude</div>
+      <div id="elevation" class="value mono">00 m</div>
+      <div id="speed" class="eyebrow mono">↑ 0.0 m/s</div>
+    </div>
+    <div class="top chapter">
+      <div class="eyebrow">Chapter</div>
+      <div id="chapterTag" class="mono">00 — CAMPUS GATE</div>
+    </div>
+
+    <section id="narrative" aria-live="polite">
+      <div id="nKicker" class="kicker">WELCOME TO DIU</div>
+      <h1 id="nTitle">DEV DAYS DHAKA 2026</h1>
+      <p id="nText">Travel through a procedural digital interpretation of the Daffodil International University campus — from the gate to the future of technology.</p>
+    </section>
+
+    <div id="profile" aria-label="Interactive journey profile">
+      <svg viewBox="0 0 100 400" role="img">
+        <path class="route" d="M50 380 C20 340 75 320 50 285 C25 250 78 220 45 180 C18 145 78 125 53 88 C38 64 55 35 50 18"/>
+        <path id="routeActive" class="routeActive" pathLength="1" d="M50 380 C20 340 75 320 50 285 C25 250 78 220 45 180 C18 145 78 125 53 88 C38 64 55 35 50 18"/>
+        <circle class="waypoint" data-index="0" cx="50" cy="380" r="6"/>
+        <circle class="waypoint" data-index="1" cx="51" cy="285" r="6"/>
+        <circle class="waypoint" data-index="2" cx="45" cy="180" r="6"/>
+        <circle class="waypoint" data-index="3" cx="53" cy="88" r="6"/>
+        <circle class="waypoint" data-index="4" cx="50" cy="18" r="6"/>
+        <circle id="marker" cx="50" cy="380" r="5"/>
+      </svg>
+    </div>
+
+    <div id="controls">
+      <button id="descend">↓ BASE CAMP</button>
+      <button id="sound">SOUND · OFF</button>
+    </div>
+  </div>
+
+  <div id="nogl" hidden>
+    <h1>Dev Days Dhaka 2026</h1>
+    <h2>Daffodil International University Campus Journey</h2>
+    <p>00 — Campus Gate: Begin the journey.</p>
+    <p>01 — The Campus: Explore the academic environment.</p>
+    <p>02 — Innovation Hub: Enter the technology zone.</p>
+    <p>03 — Dev Days: Arrive at the main event.</p>
+    <p>04 — The Future: Look toward the next generation of digital innovation.</p>
+  </div>
+
+  <div class="sr" aria-live="polite" id="srStatus">Dev Days Dhaka 2026 campus experience.</div>
+</div>
+
+<!-- YouTube API is loaded only for the optional ambient soundtrack. -->
+<div id="ytAudio" style="position:fixed;left:-10000px;top:-10000px;width:2px;height:2px"></div>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
